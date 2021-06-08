@@ -1,0 +1,297 @@
+---
+title: "Insightopedia"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    theme: cerulean
+---
+
+```{r setup, include=FALSE}
+library(bslib)
+library(flexdashboard) # Dashboard package
+library(highcharter) # Interactive data visualizations
+library(plotly) # Interactive data visualizations
+library(viridis) # Color gradients
+library(tidyverse) # Metapackge
+library(countrycode) # Converts country names/codes
+library(rjson) # JSON reader
+library(crosstalk) # Provides interactivity for HTML widgets
+library(DT)
+library(dplyr)
+library(magrittr)
+library(tidyr)
+```
+
+
+Demographic
+========================================================================
+
+
+```{r}
+#getwd()
+df1<-read.csv("unemployment_rate.csv")
+#df1<- df1 %>% subset(select = -c(X))
+#View(df1)
+#mean(df1$Unemployment_rate)
+
+
+df2<-read.csv("DemographicAge.csv")
+df2<- df2 %>% subset(select = -c(X))
+
+
+
+df2$Age_Group <- trimws(df2$Age_Group, which = c("both"))
+df2 <- df2[df2$Age_Group != "40  &  Over", ] 
+df2$Age_Group[df2$Age_Group=="Below  30"] <- "< 30"
+#View(df2)
+#mean(df1$Unemployment_rate)
+
+df3<-read.csv("DemographicGender.csv")
+df3<- df3 %>% subset(select = -c(X))
+df3$Gender <- trimws(df3$Gender, which = c("both"))
+#View(df3)
+
+
+df4<-read.csv("DemographicEducation.csv")
+df4<- df4 %>% subset(select = -c(X))
+df4$Education <- trimws(df4$Education, which = c("both"))
+#View(df4)
+
+df5<-read.csv("DemographicIndustry.csv")
+df5$Industry <- trimws(df5$Industry, which = c("both"))
+df5_long <- df5
+df5 <- spread(df5, key = Industry, value = Count)
+#View(df5)
+
+#Wide Format
+df6<-read.csv("GovernmentExpenditure.csv")
+df6<- df6 %>% subset(select = -c(X))
+View(df6)
+
+df7<-read.csv("AverageMonthlyIncome.csv")
+df7<- df7 %>% subset(select = -c(X))
+df7$averageMonthlyIncome<-gsub(",","",as.character(df7$averageMonthlyIncome))
+df7$averageMonthlyIncome <- as.integer(df7$averageMonthlyIncome)
+
+
+df8<-read.csv("corrmat.csv")
+rownames(df8)<- df8$X 
+df8<- df8 %>% subset(select = -c(X))
+#View(df8)
+
+
+
+
+
+#class(df7$averageMonthlyIncome)
+#mean(df7$averageMonthlyIncome)
+```
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+### Demographic Insghts
+
+- Unemployment is increasing slightly from 2018
+
+
+- Unemployment is maximum in old Singaporean population (above 50 ) and least in 30-39 age bracket. 
+
+- Female unemployment has almost remain constant but for male we have seen a big dip in unemployment rate from 2016 to 2019, but for the year 2020 we have seen the rise in the unemployment rate in both female and male due to uncertainty.
+
+
+
+
+Rows {data-width=650}
+-----------------------------------------------------------------------
+
+### Singaporean Unemployment Rate for the last decade (2011-2020)
+
+```{r}
+highchart() %>% 
+    hc_add_series(df1, hcaes(x = Year, y = Unemployment_rate,color = Unemployment_rate), type = "line") %>%
+    hc_tooltip(crosshairs = TRUE, borderWidth = 1.5, headerFormat = "", pointFormat = paste("Year: <b>{point.x}</b> <br> Unemployment Rate: <b>{point.y}</b>")) %>%
+    # hc_title(text = "Worldwide suicides by year") %>% 
+    hc_subtitle(text = "Year: 2011-2020") %>%
+    hc_xAxis(title = list(text = "Year")) %>%
+    hc_yAxis(title = list(text = "Unemployment Rate(%)"),
+             allowDecimals = FALSE,
+             plotLines = list(list(
+                    color = "black", width = 1, dashStyle = "Dash", 
+                    value = mean(df1$Unemployment_rate),
+                    label = list(text = "Mean = 3.98%", 
+                                 style = list(color = "black", fontSize = 11))))) %>%
+    hc_legend(enabled = FALSE)
+
+
+```
+
+Rows {data-width=350}
+-----------------------------------------------------------------------
+
+### Unemployment Rate by Age for the last decade (2011-2020)
+
+```{r}
+
+
+
+highchart() %>%
+hc_add_series(df2, hcaes(x = Year, y = Unemployment_Rate, group = Age_Group), type = "column") %>% hc_subtitle(text = "Year: 2011-2020") %>% 
+hc_yAxis(labels = list(style = list(fontSize = 10)),
+              title = list(text = "Unemployment Rate(%)"))
+             
+# hc_tooltip(borderWidth = 1.5, pointFormat = paste(": <b> {point.Age_Group} </b> <br> Age %>%  Group: <b>{point.y}</b>"))
+
+    # hc_colors(colors = sex_color) %>%
+    # hc_title(text = "Suicides by continent and <b>Gender</b>", style = (list(fontSize = '14px'))) %>% 
+    # hc_subtitle(text = "2011-2020") %>%
+    # hc_tooltip(borderWidth = 1.5, pointFormat = paste("Gender: <b> {point.sex} </b> <br> Suicides: <b>{point.y}</b>")) %>%
+    # hc_xAxis(categories = c("Africa", "Asia", "Europe", "North <br> America", "Oceania", "South <br> America"), labels = list(style = list(fontSize = 8))) %>%
+    # hc_yAxis(labels = list(style = list(fontSize = 10)),
+    #          title = list(text = "Suicides per 100K people",
+    #          style = list(fontSize = 10)),
+    #     plotLines = list(
+    #       list(color = "black", width = 1, dashStyle = "Dash", 
+    #            value = mean(overall_tibble$suicide_capita),
+    #            label = list(text = "Mean = 13.12", style = list(color = "black", fontSize = 6))))) %>%     
+    # hc_legend(verticalAlign = 'top', enabled = FALSE) %>% 
+    # hc_add_theme(custom_theme)
+
+```
+
+### Unemployment Rate by Gender for the last decade (2011-2020)
+
+```{r}
+sex_color <- c("#EE6AA7", "#87CEEB")
+
+highchart() %>%
+hc_add_series(df3, hcaes(x = Year, y = Unemployment_Rate, group = Gender), type = "column",color = sex_color) %>% hc_subtitle(text = "Year: 2011-2020") %>% 
+hc_yAxis(labels = list(style = list(fontSize = 10)),
+              title = list(text = "Unemployment Rate(%)"))
+```
+
+
+Job-Demand
+========================================================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+### Job demand Insights
+
+- Highest unemployment rate is seen among highest educated category (degree) .
+- Year change 
+- We have seen a slight decrease in the manufacturing sector which contributes 20-25% of the GDP.
+- Their a constant rip in service sector across the years.
+- The government recurrent expenditure increased for the most part but it shows a decline from year 2018 to 2020
+-  Average household monthly income
+- The average monthly income of people also continued to rise when in 2020 it fell for the first time in ten years 
+
+
+
+
+Rows {data-width=650}
+-----------------------------------------------------------------------
+
+### Unemployment rate by education for the last decade (2011-2020)
+```{r}
+highchart() %>%
+hc_add_series(df4, hcaes(x = Year, y = Unemployment_Rate, group = Education), type = "column") %>% hc_subtitle(text = "Year: 2011-2020") %>% 
+hc_yAxis(labels = list(style = list(fontSize = 10)),
+              title = list(text = "Unemployment Rate(%)"))
+```
+
+### Industry Demographic from Year (2011-2020)
+```{r}
+#View(df5)
+#View(df5_long)
+# highchart() %>% 
+#   hc_chart(type = "column")  %>% 
+#   #hc_title(text = "TItle") %>% 
+#   hc_subtitle(text = "Year: 2011-2020") %>% 
+#   hc_plotOptions(column = list(
+#     dataLabels = list(enabled = FALSE),
+#     stacking = "normal",
+#     enableMouseTracking = FALSE)
+#   ) %>% 
+#   hc_series(list(name="Services",data=df5$Services),
+#             list(name="Manufacturing",data=df5$Manufacturing),
+#             list(name="Construction",data=df5$Construction),
+#             list(name="Other Industries Nes",data=df5$`Other Industries Nes`)) 
+
+df5_long <- within(df5_long, Industry <- factor(Industry, levels=c("Services","Manufacturing"
+                                                                   ,"Construction",
+                                                                   "Other Industries Nes")))
+df5_long  %>% 
+  hchart('column', hcaes(x = 'Year', y = 'Count', group = 'Industry'),
+    stacking = "normal")
+
+    
+  
+```
+
+Rows {data-width=650}
+-----------------------------------------------------------------------
+### Govt expenditure on education for the last decade (2011-2020)
+```{r}
+highchart() %>% 
+    hc_add_series(df6, hcaes(x = year, y = recurrent_expenditure_total,color = recurrent_expenditure_total), type = "line") %>%
+    hc_tooltip(crosshairs = TRUE, borderWidth = 1.5, headerFormat = "", pointFormat = paste("Year: <b>{point.x}</b> <br> Recurrent Expediture Total: <b>{point.y}</b>")) %>%
+    # hc_title(text = "Worldwide suicides by year") %>% 
+    hc_subtitle(text = "Year: 2011-2020") %>%
+    hc_xAxis(title = list(text = "Year")) %>%
+    hc_yAxis(title = list(text = "Recurrent Expediture Total($)"),
+             allowDecimals = FALSE,
+             plotLines = list(list(
+                    color = "black", width = 1, dashStyle = "Dash", 
+                    value = mean(df6$recurrent_expenditure_total),
+                    label = list(text = "Mean = $11,145,322", 
+                                 style = list(color = "black", fontSize = 11))))) %>%
+    hc_legend(enabled = FALSE)
+```
+
+
+
+### Average house hold monthly income for the last decade (2011-2020)
+```{r}
+
+
+highchart() %>% 
+    hc_add_series(df7, hcaes(x = Year, y = averageMonthlyIncome,color = averageMonthlyIncome), type = "line") %>%
+    hc_tooltip(crosshairs = TRUE, borderWidth = 1.5, headerFormat = "", pointFormat = paste("Year: <b>{point.x}</b> <br> Recurrent Expediture Total: <b>{point.y}</b>")) %>%
+    # hc_title(text = "Worldwide suicides by year") %>% 
+    hc_subtitle(text = "Year: 2011-2020") %>%
+    hc_xAxis(title = list(text = "Year")) %>%
+    hc_yAxis(title = list(text = "Avg. HouseHold Monthly Income ($)"),
+             allowDecimals = FALSE,
+             plotLines = list(list(
+                    color = "black", width = 1, dashStyle = "Dash", 
+                    value = mean(df7$averageMonthlyIncome),
+                    label = list(text = "Mean = $3594.20", 
+                                 style = list(color = "black", fontSize = 11))))) %>%
+    hc_legend(enabled = FALSE)
+
+
+```
+
+Factors affecting Unemployment
+========================================================================
+Column {.sidebar}
+-----------------------------------------------------------------------
+### Factor affecting unemployment Insights
+- It emerges that unemployment rate has high correlations with age, education and gender, and the government’s recurrent expenditure closely correlates with the public’s average monthly income.
+
+Rows {data-width=650}
+-----------------------------------------------------------------------
+
+### Factors contribution towards Unmeployment, 2020
+```{r}
+m <- as.matrix(df8)
+x<-y<-colnames(df8)
+fig10 <- plot_ly(
+    x = x, y = y,
+    z = m, type = "heatmap"#name = " "#,
+    #hovertemplate = paste("<b>Correlation:</b> %{z:.2f}")
+)
+
+fig10
+```
